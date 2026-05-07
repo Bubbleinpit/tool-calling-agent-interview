@@ -12,7 +12,7 @@ def main() -> None:
     parser.add_argument(
         "prompt",
         nargs="?",
-        default="计算 2 + 3 * 4，并告诉我上海天气",
+        default="请计算 2 + 3 * 4",
         help="User prompt to send to the agent.",
     )
     parser.add_argument(

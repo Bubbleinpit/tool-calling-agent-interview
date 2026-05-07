@@ -1,6 +1,6 @@
 # Tool Calling Agent Interview Project
 
-一个自包含的 Python 小项目，用来演示最小可运行的 agent tool calling 循环。它不依赖真实 LLM API，因此适合现场编程题：候选人可以直接跑测试，然后把同步 tool 调用改造成一个最小 background task 接口。
+一个自包含的 Python 小项目，用来演示最小可运行的 agent tool calling 循环。它不依赖真实 LLM API，因此适合现场编程题：候选人可以直接跑测试，然后把同步 tool 调用改造成非阻塞后台执行。
 
 ## 项目结构
 
@@ -24,7 +24,7 @@ uv run tool-agent --trace
 uv run pytest
 ```
 
-示例输出会包含两次 tool 调用：`calculator` 和 `get_weather`。
+示例输出会包含一次 `calculator` tool 调用。
 
 ## 当前行为
 
@@ -43,27 +43,19 @@ tool_result = self.tools.execute(tool_call)
 
 ## 15 分钟面试扩展题
 
-把 `ToolRegistry.execute(tool_call)` 改成通过 `BackgroundTaskRunner` 提交执行。目标不是实现完整任务队列，而是看候选人能否拆出清晰接口、调整 agent loop，并用测试证明行为。
+把同步 tool 调用改成非阻塞后台执行。目标不是实现完整任务队列，而是看候选人能否识别阻塞点、调整 agent loop 的返回语义，并用测试证明工具运行不会卡住本次 agent 调用。
 
-建议最小接口：
+最小要求：
 
-```python
-class BackgroundTaskRunner:
-    def submit(self, tool_call: ToolCall) -> str: ...
-    def result(self, job_id: str) -> str: ...
-```
-
-要求：
-
-- `submit(tool_call)` 返回 `job_id`
-- `result(job_id)` 可以阻塞等待并返回 tool result
-- 一个 agent turn 中如果有多个 `tool_call`，先全部 `submit`，再逐个取 `result`
-- 现有测试继续通过
-- 新增一个测试，证明 agent 确实调用了 `submit`
+- 只需要支持一个 pending tool call
+- 工具开始执行后，agent 本次调用应尽快返回
+- 返回值需要包含足够信息，让调用方之后可以继续 agent loop
+- 工具结果可用后，agent 能把结果作为 `tool` 消息写回上下文，并继续得到最终回答
+- 新增或调整测试，证明 tool call 不会阻塞 agent 本次调用
 
 追问或加分项：
 
+- 支持一个 assistant turn 里的多个 tool call：依次启动多个后台任务，但不等待前一个完成后才启动下一个
 - 支持任务超时和取消
 - 支持 `pending`、`running`、`succeeded`、`failed` 状态
-- 多个 tool call 真正并发执行
 - 后续替换成 Celery、RQ、Temporal 或数据库队列

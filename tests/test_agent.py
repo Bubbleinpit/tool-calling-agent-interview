@@ -20,19 +20,17 @@ def test_agent_executes_calculator_tool() -> None:
     ]
 
 
-def test_agent_executes_multiple_tool_calls_in_one_turn() -> None:
+def test_agent_executes_weather_tool() -> None:
     agent = ToolCallingAgent(
         model=RuleBasedDemoModel(),
         tools=build_demo_registry(),
     )
 
-    result = agent.run("计算 10 / 2，并告诉我上海天气")
+    result = agent.run("告诉我上海天气")
 
     tool_messages = [message for message in result.messages if message.role == "tool"]
-    assert len(tool_messages) == 2
-    assert tool_messages[0].name == "calculator"
-    assert tool_messages[1].name == "get_weather"
-    assert '"result": 5.0' in result.final_answer
+    assert len(tool_messages) == 1
+    assert tool_messages[0].name == "get_weather"
     assert '"city": "Shanghai"' in result.final_answer
 
 
