@@ -1,5 +1,5 @@
 from tool_agent import Message, RuleBasedDemoModel, ToolCallingAgent
-from tool_agent.demo_tools import build_demo_registry
+from tool_agent.demo_tools import build_demo_registry, get_weather
 
 
 def test_agent_executes_calculator_tool() -> None:
@@ -20,18 +20,15 @@ def test_agent_executes_calculator_tool() -> None:
     ]
 
 
-def test_agent_executes_weather_tool() -> None:
-    agent = ToolCallingAgent(
-        model=RuleBasedDemoModel(),
-        tools=build_demo_registry(),
-    )
-
-    result = agent.run("告诉我上海天气")
-
-    tool_messages = [message for message in result.messages if message.role == "tool"]
-    assert len(tool_messages) == 1
-    assert tool_messages[0].name == "get_weather"
-    assert '"city": "Shanghai"' in result.final_answer
+def test_get_weather_tool_returns_demo_data() -> None:
+    # Exercises the weather tool directly. The interview task changes how the
+    # agent *runs* this tool (sync vs non-blocking background), so asserting on
+    # the agent-level weather flow is intentionally left to the candidate.
+    assert get_weather("Shanghai") == {
+        "city": "Shanghai",
+        "condition": "cloudy",
+        "temperature_c": 25,
+    }
 
 
 def test_unknown_tool_returns_tool_error_message() -> None:

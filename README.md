@@ -41,23 +41,8 @@ uv run pytest
 tool_result = self.tools.execute(tool_call)
 ```
 
-## 15 分钟面试扩展题
+## 面试扩展题
 
-让 agent 同时支持同步工具和后台工具。目标不是实现完整任务队列，而是看候选人能否识别阻塞点、为工具引入执行策略，并调整 agent loop 的返回语义。
+让 agent 同时支持同步工具和**非阻塞**后台工具。`get_weather` 带有真实延迟，同步执行会阻塞整个 agent 调用。核心考察点：候选人能否识别 agent loop 与后台任务之间需要一种通信 / 同步机制，并把它实现出来（最简单可接受方案是轮询）。
 
-最小要求：
-
-- 只需要支持一个 pending background tool call
-- `calculator` 保持同步工具：调用后应直接得到最终回答
-- `get_weather` 改为后台工具：启动后 agent 本次调用应尽快返回
-- 后台工具返回值需要包含足够信息，让调用方之后可以继续 agent loop
-- 后台工具结果可用后，agent 能把结果作为 `tool` 消息写回上下文，并继续得到最终回答
-- 新增或调整测试，证明同步工具仍然同步、后台工具不会阻塞当前 agent 调用
-
-追问或加分项：
-
-- 支持一个 assistant turn 里的多个 tool call：依次启动多个后台任务，但不等待前一个完成后才启动下一个
-- 同一个 assistant turn 中混合同步工具和后台工具
-- 支持任务超时和取消
-- 支持 `pending`、`running`、`succeeded`、`failed` 状态
-- 后续替换成 Celery、RQ、Temporal 或数据库队列
+完整任务说明见 [INTERVIEW_TASK.md](INTERVIEW_TASK.md)。

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import operator
+import time
 from typing import Any
 
 from .tools import ToolRegistry
@@ -15,7 +16,12 @@ WEATHER = {
 }
 
 
-def build_demo_registry() -> ToolRegistry:
+DEFAULT_WEATHER_LATENCY_SECONDS = 0.2
+
+
+def build_demo_registry(
+    weather_latency: float = DEFAULT_WEATHER_LATENCY_SECONDS,
+) -> ToolRegistry:
     registry = ToolRegistry()
     registry.register(
         name="calculator",
@@ -32,6 +38,13 @@ def build_demo_registry() -> ToolRegistry:
         },
         handler=calculator,
     )
+
+    def get_weather_with_latency(city: str) -> dict[str, Any]:
+        # Simulates a slow remote call. This latency is the whole reason
+        # running get_weather on the agent's main loop is a blocking problem.
+        time.sleep(weather_latency)
+        return get_weather(city)
+
     registry.register(
         name="get_weather",
         description="Look up demo weather for a supported city.",
@@ -45,7 +58,7 @@ def build_demo_registry() -> ToolRegistry:
             },
             "required": ["city"],
         },
-        handler=get_weather,
+        handler=get_weather_with_latency,
     )
     return registry
 
